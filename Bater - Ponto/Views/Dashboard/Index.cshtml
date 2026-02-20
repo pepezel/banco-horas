@@ -1,0 +1,171 @@
+﻿@model List<Bater_Ponto.Models.RegistroPonto>
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var saldo = ViewBag.SaldoTotal as TimeSpan? ?? TimeSpan.Zero;
+    var totalTrabalhado = ViewBag.TotalTrabalhado as TimeSpan? ?? TimeSpan.Zero;
+    var diasPositivos = ViewBag.DiasPositivos ?? 0;
+    var diasNegativos = ViewBag.DiasNegativos ?? 0;
+
+    var sinalSaldo = saldo < TimeSpan.Zero ? "-" : "+";
+    var saldoFormatado = saldo.Duration().ToString(@"hh\:mm\:ss");
+}
+
+<h2>Dashboard</h2>
+
+<form method="get" class="row g-3">
+    <div class="col-md-3">
+        <label>Data Início</label>
+        <input type="date" name="dataInicio" class="form-control"
+               value="@(ViewBag.DataInicio != null ? ((DateTime)ViewBag.DataInicio).ToString("yyyy-MM-dd") : "")" />
+    </div>
+
+    <div class="col-md-3">
+        <label>Data Fim</label>
+        <input type="date" name="dataFim" class="form-control"
+               value="@(ViewBag.DataFim != null ? ((DateTime)ViewBag.DataFim).ToString("yyyy-MM-dd") : "")" />
+    </div>
+
+    <div class="col-md-3 align-self-end">
+        <button type="submit" class="btn btn-success">Filtrar</button>
+    </div>
+</form>
+
+<hr />
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow p-3">
+            <h6>Total Trabalhado</h6>
+            <h4>@totalTrabalhado.ToString(@"hh\:mm\:ss")</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white @(saldo < TimeSpan.Zero ? "bg-danger" : "bg-success") shadow p-3">
+            <h6>Saldo no Período</h6>
+            <h4>@($"{sinalSaldo}{saldoFormatado}")</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow p-3">
+            <h6>Dias Positivos</h6>
+            <h4>@diasPositivos</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-danger shadow p-3">
+            <h6>Dias Negativos</h6>
+            <h4>@diasNegativos</h4>
+        </div>
+    </div>
+
+</div>
+
+<a href="/Ponto" class="btn btn-primary mb-3">Registrar Ponto</a>
+
+<hr />
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Total Trabalhado</th>
+            <th>Saldo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var saldoDia = item.CalcularSaldoDia();
+            var totalDia = item.CalcularTotalTrabalhado();
+
+            var s = saldoDia ?? TimeSpan.Zero;
+            var classe = saldoDia == null ? "" : (s < TimeSpan.Zero ? "table-danger" : "table-success");
+
+            <tr class="@classe">
+                <td>@item.Data.ToShortDateString()</td>
+                <td>@(totalDia != null ? totalDia.Value.ToString(@"hh\:mm\:ss") : "Em andamento")</td>
+                <td>
+                    @(saldoDia != null
+                                    ? (s < TimeSpan.Zero ? "-" : "+") + s.Duration().ToString(@"hh\:mm\:ss")
+                                    : "Em andamento")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<h4>Evolução do Saldo</h4>
+<canvas id="graficoSaldo" height="100"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const datas = [
+        @foreach (var item in Model)
+        {
+                @: "@item.Data.ToString("dd/MM")",
+        }
+    ];
+
+    const saldos = [
+        @foreach (var item in Model)
+        {
+                var saldoDia = item.CalcularSaldoDia();
+                var valor = saldoDia != null ? saldoDia.Value.TotalHours : 0;
+                @: @valor.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        }
+    ];
+
+    const ctx = document.getElementById('graficoSaldo').getContext('2d');
+
+    const maiorBruto = saldos.length > 0
+        ? Math.max(...saldos.map(v => Math.abs(v)))
+        : 0;
+
+    const maiorValor = Math.max(Math.ceil(maiorBruto / 2) * 2, 8);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: datas,
+            datasets: [{
+                label: 'Saldo (Horas)',
+                data: saldos,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: -maiorValor,
+                    max: maiorValor,
+                    ticks: {
+                        stepSize: 2,
+                        callback: function(value) {
+                            return value + "h";
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>

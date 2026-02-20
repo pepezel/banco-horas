@@ -1,0 +1,100 @@
+﻿@model List<Bater_Ponto.Models.RegistroPonto>
+
+@{
+    ViewData["Title"] = "Banco de Horas";
+}
+
+<h2>Banco de Horas</h2>
+
+@{
+    var saldoTotal = ViewBag.SaldoAcumulado as TimeSpan?;
+}
+
+@if (saldoTotal != null)
+{
+    var s = saldoTotal.Value;
+    var sinal = s < TimeSpan.Zero ? "-" : "+";
+    var tempo = s.Duration().ToString(@"hh\:mm\:ss");
+
+    var cargaDia = TimeSpan.FromHours(8.5);
+    var dias = (int)(s.Duration().TotalSeconds / cargaDia.TotalSeconds);
+    var restoSegundos = s.Duration().TotalSeconds % cargaDia.TotalSeconds;
+    var resto = TimeSpan.FromSeconds(restoSegundos);
+
+    <div class="alert @(s < TimeSpan.Zero ? "alert-danger" : "alert-success")">
+        <strong>Saldo acumulado total:</strong> @($"{sinal}{tempo}") <br />
+        <strong>Equivalente a:</strong> @dias dia(s) e @resto.ToString(@"hh\:mm\:ss")
+    </div>
+}
+
+<form asp-action="Registrar" method="post">
+    <button type="submit" class="btn btn-primary">
+        Bater Ponto Agora
+    </button>
+</form>
+
+<hr />
+
+<h3>Registros</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Entrada</th>
+            <th>Saída Almoço</th>
+            <th>Volta Almoço</th>
+            <th>Saída Final</th>
+            <th>Total</th>
+            <th>Saldo</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Data.ToShortDateString()</td>
+
+                <td>@(item.EntradaManha != default ? item.EntradaManha.ToString("HH:mm:ss") : "-")</td>
+
+                <td>@(item.SaidaAlmoco != default ? item.SaidaAlmoco.ToString("HH:mm:ss") : "-")</td>
+
+                <td>@(item.VoltaAlmoco != default ? item.VoltaAlmoco.ToString("HH:mm:ss") : "-")</td>
+
+                <td>@(item.SaidaFinal != default ? item.SaidaFinal.ToString("HH:mm:ss") : "-")</td>
+
+                <td>
+                    @(item.CalcularTotalTrabalhado()?.ToString(@"hh\:mm\:ss") ?? "Em andamento")
+                </td>
+
+                <td>
+                    @{
+                        var saldo = item.CalcularSaldoDia();
+
+                        if (saldo == null)
+                        {
+                            @:Em andamento
+                        }
+                        else
+                        {
+                            var s = saldo.Value;
+                            var sinal = s < TimeSpan.Zero ? "-" : "";
+                            var tempo = s.Duration().ToString(@"hh\:mm\:ss");
+                            @($"{sinal}{tempo}")
+                        }
+                    }
+                </td>
+
+                <td>
+                    <form asp-action="Excluir" method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Excluir
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Banco de Horas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+        }
+
+        .nav-link.active {
+            background-color: #0d6efd !important;
+        }
+
+        .card {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex">
+
+        <!-- Sidebar -->
+        <div class="sidebar bg-dark text-white p-3">
+
+            <h4 class="text-center mb-4">
+                <i class="bi bi-clock-history"></i> BancoHoras
+            </h4>
+
+            <ul class="nav nav-pills flex-column">
+
+                <li class="nav-item mb-2">
+                    <a href="/" class="nav-link text-white @(Context.Request.Path == "/" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item mb-2">
+                    <a href="/Ponto" class="nav-link text-white @(Context.Request.Path.StartsWithSegments("/Ponto") ? "active" : "")">
+                        <i class="bi bi-stopwatch"></i> Registrar Ponto
+                    </a>
+                </li>
+
+            </ul>
+
+            <hr />
+
+            <div class="text-center small">
+                © 2026 - Pedro
+            </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="flex-fill">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-light bg-white shadow-sm px-4">
+                <span class="navbar-brand mb-0 h5">
+                    @ViewData["Title"]
+                </span>
+
+                <span class="text-muted">
+                    @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                </span>
+            </nav>
+
+            <div class="p-4 bg-light min-vh-100">
+                @RenderBody()
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

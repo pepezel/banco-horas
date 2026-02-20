@@ -72,4 +72,6 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
+app.MapRazorPages();
+app.Urls.Add("http://0.0.0.0:8080");
 app.Run();

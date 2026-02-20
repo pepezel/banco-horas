@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
+using Bater_Ponto.Identity;
 
 namespace Bater_Ponto.Models
 {
@@ -11,6 +13,12 @@ namespace Bater_Ponto.Models
         public DateTime SaidaAlmoco { get; set; }
         public DateTime VoltaAlmoco { get; set; }
         public DateTime SaidaFinal { get; set; }
+
+        // 🔒 RELAÇÃO COM USUÁRIO
+        public string UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public ApplicationUser User { get; set; }
 
         public TimeSpan? CalcularTotalTrabalhado()
         {
@@ -35,7 +43,8 @@ namespace Bater_Ponto.Models
             if (total == null)
                 return null;
 
-            TimeSpan cargaPadrao = TimeSpan.FromHours(8.5);
+            // 🎯 8h48 = 8.8 horas
+            TimeSpan cargaPadrao = TimeSpan.FromHours(8.8);
 
             return total.Value - cargaPadrao;
         }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Bater_Ponto.Data;
 using Bater_Ponto.Models;
+using Bater_Ponto.Identity;
 using System;
 using System.Linq;
 
@@ -11,15 +13,21 @@ namespace Bater_Ponto.Controllers
     public class DashboardController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DashboardController(AppDbContext context)
+        public DashboardController(AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public IActionResult Index(DateTime? dataInicio, DateTime? dataFim)
         {
-            var registros = _context.RegistrosPonto.AsQueryable();
+            var userId = _userManager.GetUserId(User);
+
+            var registros = _context.RegistrosPonto
+                .Where(r => r.UserId == userId)
+                .AsQueryable();
 
             if (dataInicio.HasValue)
                 registros = registros.Where(r => r.Data >= dataInicio.Value);

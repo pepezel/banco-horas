@@ -9,7 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("AppDbContextCo
     ?? throw new InvalidOperationException("Connection string not found.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
@@ -72,6 +72,9 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-app.MapRazorPages();
-app.Urls.Add("http://0.0.0.0:8080");
+if (app.Environment.IsProduction())
+{
+    app.Urls.Add("http://0.0.0.0:8080");
+}
+
 app.Run();

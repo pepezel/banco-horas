@@ -102,27 +102,28 @@
 
 <hr />
 
-<h4>Evolução do Saldo</h4>
+<h4>Saldo Acumulado</h4>
 <canvas id="graficoSaldo" height="100"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    const datas = [
-        @foreach (var item in Model)
-        {
-                @: "@item.Data.ToString("dd/MM")",
-        }
-    ];
+    const datas = [];
+    const saldos = [];
 
-    const saldos = [
-        @foreach (var item in Model)
-        {
-                var saldoDia = item.CalcularSaldoDia();
-                var valor = saldoDia != null ? saldoDia.Value.TotalHours : 0;
-                @: @valor.ToString(System.Globalization.CultureInfo.InvariantCulture),
-        }
-    ];
+    let acumulado = 0;
+
+    @foreach (var item in Model.OrderBy(r => r.Data))
+    {
+            var saldoDia = item.CalcularSaldoDia();
+            var valor = saldoDia != null ? saldoDia.Value.TotalHours : 0;
+
+            <text>
+                datas.push("@item.Data.ToString("dd/MM")");
+                acumulado += @valor.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                saldos.push(acumulado);
+            </text>
+    }
 
     const ctx = document.getElementById('graficoSaldo').getContext('2d');
 
@@ -137,11 +138,11 @@
         data: {
             labels: datas,
             datasets: [{
-                label: 'Saldo (Horas)',
+                label: 'Saldo Acumulado (Horas)',
                 data: saldos,
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13,110,253,0.2)',
-                borderWidth: 2,
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25,135,84,0.2)',
+                borderWidth: 3,
                 tension: 0.3,
                 fill: true,
                 pointRadius: 5

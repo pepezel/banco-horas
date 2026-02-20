@@ -10,6 +10,19 @@
 
     var sinalSaldo = saldo < TimeSpan.Zero ? "-" : "+";
     var saldoFormatado = saldo.Duration().ToString(@"hh\:mm\:ss");
+
+    var horasHoje = ViewBag.HorasTrabalhadasHoje as TimeSpan? ?? TimeSpan.Zero;
+    var percentualHoje = ViewBag.PercentualHoje ?? 0.0;
+    var metaDiaria = ViewBag.MetaDiaria as TimeSpan? ?? TimeSpan.Zero;
+    var restanteHoje = ViewBag.RestanteHoje as TimeSpan? ?? TimeSpan.Zero;
+    var metaConcluida = ViewBag.MetaConcluida ?? false;
+
+    var totalSemana = ViewBag.TotalSemana as TimeSpan? ?? TimeSpan.Zero;
+    var metaSemanaEsperada = ViewBag.MetaSemanaEsperada as TimeSpan? ?? TimeSpan.Zero;
+    var saldoSemana = ViewBag.SaldoSemana as TimeSpan? ?? TimeSpan.Zero;
+
+    var corBarra = percentualHoje < 100 ? "bg-warning" : "bg-success";
+    var corSaldoSemana = saldoSemana < TimeSpan.Zero ? "bg-danger" : "bg-success";
 }
 
 <h2>Dashboard</h2>
@@ -34,6 +47,7 @@
 
 <hr />
 
+<!-- 📊 RESUMO GERAL -->
 <div class="row mb-4">
 
     <div class="col-md-3">
@@ -66,39 +80,69 @@
 
 </div>
 
+<!-- 📅 META SEMANAL -->
+<div class="row mb-4">
+
+    <div class="col-md-4">
+        <div class="card text-white bg-info shadow p-3">
+            <h6>Total Trabalhado na Semana</h6>
+            <h4>@totalSemana.ToString(@"hh\:mm\:ss")</h4>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-secondary shadow p-3">
+            <h6>Meta Esperada até Hoje</h6>
+            <h4>@metaSemanaEsperada.ToString(@"hh\:mm\:ss")</h4>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white @corSaldoSemana shadow p-3">
+            <h6>Saldo da Semana</h6>
+            <h4>
+                @(saldoSemana < TimeSpan.Zero ? "-" : "+")
+                @saldoSemana.Duration().ToString(@"hh\:mm\:ss")
+            </h4>
+        </div>
+    </div>
+
+</div>
+
+<!-- 🎯 META DO DIA -->
+<div class="card shadow p-3 mb-4">
+    <h6>Meta de Hoje (@metaDiaria.ToString(@"hh\:mm"))</h6>
+
+    <div class="progress" style="height: 25px;">
+        <div class="progress-bar @corBarra"
+             role="progressbar"
+             style="width: @percentualHoje%;"
+             aria-valuenow="@percentualHoje"
+             aria-valuemin="0"
+             aria-valuemax="100">
+            @percentualHoje.ToString("0")%
+        </div>
+    </div>
+
+    <small class="text-muted d-block">
+        Trabalhado hoje: @horasHoje.ToString(@"hh\:mm\:ss")
+    </small>
+
+    @if (!metaConcluida)
+    {
+        <small class="text-warning fw-bold d-block">
+            Hoje você ainda precisa trabalhar @restanteHoje.ToString(@"hh\:mm\:ss")
+        </small>
+    }
+    else
+    {
+        <small class="text-success fw-bold d-block">
+            Meta diária concluída 🎉
+        </small>
+    }
+</div>
+
 <a href="/Ponto" class="btn btn-primary mb-3">Registrar Ponto</a>
-
-<hr />
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Data</th>
-            <th>Total Trabalhado</th>
-            <th>Saldo</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            var saldoDia = item.CalcularSaldoDia();
-            var totalDia = item.CalcularTotalTrabalhado();
-
-            var s = saldoDia ?? TimeSpan.Zero;
-            var classe = saldoDia == null ? "" : (s < TimeSpan.Zero ? "table-danger" : "table-success");
-
-            <tr class="@classe">
-                <td>@item.Data.ToShortDateString()</td>
-                <td>@(totalDia != null ? totalDia.Value.ToString(@"hh\:mm\:ss") : "Em andamento")</td>
-                <td>
-                    @(saldoDia != null
-                                    ? (s < TimeSpan.Zero ? "-" : "+") + s.Duration().ToString(@"hh\:mm\:ss")
-                                    : "Em andamento")
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
 
 <hr />
 
@@ -127,12 +171,6 @@
 
     const ctx = document.getElementById('graficoSaldo').getContext('2d');
 
-    const maiorBruto = saldos.length > 0
-        ? Math.max(...saldos.map(v => Math.abs(v)))
-        : 0;
-
-    const maiorValor = Math.max(Math.ceil(maiorBruto / 2) * 2, 8);
-
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -149,24 +187,7 @@
             }]
         },
         options: {
-            responsive: true,
-            scales: {
-                y: {
-                    min: -maiorValor,
-                    max: maiorValor,
-                    ticks: {
-                        stepSize: 2,
-                        callback: function(value) {
-                            return value + "h";
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
+            responsive: true
         }
     });
 </script>
